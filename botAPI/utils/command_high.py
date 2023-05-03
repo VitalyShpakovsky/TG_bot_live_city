@@ -1,3 +1,2 @@
-def mes_low():
+def mes_high():
     return 'Пока нет команды'
-
