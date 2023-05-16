@@ -276,7 +276,6 @@ headers = {"X-RapidAPI-Key": token.api_key.get_secret_value(),
 response = requests.get(url, headers=headers)
 data = json.loads(response.text)
 name_data = 'diploma'
-name_table = 'city'
 db_read = crud.added()
 db_clear = crud.table_clear()
 db_create = crud.create()
@@ -313,7 +312,6 @@ def get_text_limit_low(message):
 def get_text_low(message):
     global name_country
     global data
-    global name_table
     global name_data
     global db_create
     answer = ''
