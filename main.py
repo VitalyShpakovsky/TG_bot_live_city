@@ -371,13 +371,16 @@ def get_text_low(message):
         result = db_sort_low(limit=limit)
     else:
         result = db_sort_low()
-    print(result)
-    for i in result:
-        city = i['name_city']
-        info_city = func_info_city(country=name_country, city=city)
-        weather_city = func_weather_city(city=city)
-        answer += f"{city}: {info_city}. Weather: {weather_city}\n"
-        bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    if len(result) > 0:
+        for i in result:
+            city = i['name_city']
+            info_city = func_info_city(country=name_country, city=city)
+            weather_city = func_weather_city(city=city)
+            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
+            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    else:
+        answer += f"Данных о стране {name_country} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
     db_history('low', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
@@ -407,13 +410,20 @@ def get_text_high(message):
         result = db_sort_high(limit=limit)
     else:
         result = db_sort_high()
-    for i in result:
-        city = i['name_city']
-        answer += f"{city} "
-        bot.send_message(message.from_user.id, city)
+    print(result)
+    if len(result) > 0:
+        for i in result:
+            city = i['name_city']
+            info_city = func_info_city(country=name_country, city=city)
+            weather_city = func_weather_city(city=city)
+            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
+            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    else:
+        answer += f"Данных о стране {name_country} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
     db_history('high', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
-    bot.send_message(message.from_user.id, 'DELETE')
+    bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
 @bot.message_handler(commands=['custom'])
@@ -456,13 +466,19 @@ def get_text_seven_custom(message):
         result = db_sort_custom(float(first_num), float(seven_num), limit=limit)
     else:
         result = db_sort_custom(float(first_num), float(seven_num))
-    for i in result:
-        city = i['name_city']
-        answer += f"{city} "
-        bot.send_message(message.from_user.id, city)
+    if len(result) > 0:
+        for i in result:
+            city = i['name_city']
+            info_city = func_info_city(country=name_country, city=city)
+            weather_city = func_weather_city(city=city)
+            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
+            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    else:
+        answer += f"Данных о стране {name_country} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
     db_history('custom', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
-    bot.send_message(message.from_user.id, 'DELETE')
+    bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
 @bot.message_handler(commands=['history'])
@@ -486,7 +502,7 @@ def get_text_command_high(message):
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     if message.text == 'Привет':
-        bot.send_message(message.from_user.id, "Как тебя зовут?")
+        bot.send_message(message.from_user.id, "Для ознакомления с командами бота напиши /help")
 
 
 if __name__ == '__main__':
