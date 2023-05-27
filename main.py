@@ -47,7 +47,7 @@ def _new_create_database(db_name: str) -> None:  # Создается база �
             with connection.cursor() as cursor:
                 create_table_city = "CREATE TABLE IF NOT EXISTS `history`(id_history INT PRIMARY KEY AUTO_INCREMENT, " \
                                     "`command` VARCHAR(10), `country` VARCHAR(30)," \
-                                    " `city` VARCHAR(100), `data` DATETIME)"
+                                    " `city` TEXT(1000), `data` DATETIME)"
                 cursor.execute(create_table_city)
                 print('Table created')
         finally:
@@ -266,6 +266,56 @@ def func_add_table(db: dict, user_country: str):
             db_read(i_dict['city_name'], i_dict['country_name'], i_dict['lat'], i_dict['lng'])
 
 
+def func_info_city(country: str, city: str) -> str:
+    url = "https://cost-of-living-and-prices.p.rapidapi.com/prices"
+    querystring = {"city_name": city, "country_name": country.title()}
+    headers = {
+        "X-RapidAPI-Key": token.api_key.get_secret_value(),
+        "X-RapidAPI-Host": token.api_host.get_secret_value()}
+    response = requests.get(url, headers=headers, params=querystring)
+    data = json.loads(response.text)
+    price_bedroom = 'Нет данных'
+    price_apartment = 'Нет данных'
+    price_taxi = 'Нет данных'
+    price_apartment_center = 'Нет данных'
+    price_utilities = 'Нет данных'
+    price_internet = 'Нет данных'
+    for i_key in data['prices']:
+        if i_key['item_name'] == "Price per square meter to Buy Apartment Outside of City Center":
+            price_apartment = i_key['usd']['avg']
+        if i_key['item_name'] == "Price per square meter to Buy Apartment in City Center":
+            price_apartment_center = i_key['usd']['avg']
+        if i_key['item_name'] == "Basic utilities for 85 square meter Apartment including Electricity, " \
+                                 "Heating or Cooling, Water and Garbage":
+            price_utilities = i_key['usd']['avg']
+        if i_key['item_name'] == "Internet, 60 Mbps or More, Unlimited Data, Cable/ADSL":
+            price_internet = i_key['usd']['avg']
+        if i_key['item_name'] == "One bedroom apartment in city centre":
+            price_bedroom = i_key['usd']['avg']
+        if i_key['item_name'] == "Taxi, price for 1 km, Normal Tariff":
+            price_taxi = i_key['usd']['avg']
+    answer = f'Средняя стоимость 1 кв. метра жилья вне центра города $ {price_apartment}\n'\
+             f'Средняя стоимость 1 кв. метра жилья в центре города $ {price_apartment_center}\n'\
+             f'Стоимость коммунальных услуг квартиры 85 кв. метров $ {price_utilities}\n'\
+             f'Стоимость интернета в месяц $ {price_internet}\n'\
+             f'Средняя стоимость аренды однокомнатной квартиры $ {price_bedroom}\n'\
+             f'Средняя стоимость 1 км поездки на такси ${price_taxi}'
+    return answer
+
+
+def func_weather_city(city: str) -> str:
+    url = "https://weatherapi-com.p.rapidapi.com/forecast.json"
+    querystring = {"q": city, "days": "1"}
+    headers = {
+        "X-RapidAPI-Key": token.api_key.get_secret_value(),
+        "X-RapidAPI-Host": token.api_host_weather.get_secret_value()}
+    response = requests.get(url, headers=headers, params=querystring)
+    data = json.loads(response.text)
+    answer = f"Температура: {data['current']['temp_c']}°C\nВлажность: {data['current']['humidity']} %\n"\
+             f"Давление: {data['current']['pressure_mb']} mbar."
+    return answer
+
+
 token = BotAPISettings()
 headers = {'Token': token.token_key.get_secret_value()}
 bot = telebot.TeleBot(headers['Token'])
@@ -276,7 +326,6 @@ headers = {"X-RapidAPI-Key": token.api_key.get_secret_value(),
 response = requests.get(url, headers=headers)
 data = json.loads(response.text)
 name_data = 'diploma'
-name_table = 'city'
 db_read = crud.added()
 db_clear = crud.table_clear()
 db_create = crud.create()
@@ -313,7 +362,6 @@ def get_text_limit_low(message):
 def get_text_low(message):
     global name_country
     global data
-    global name_table
     global name_data
     global db_create
     answer = ''
@@ -323,13 +371,19 @@ def get_text_low(message):
         result = db_sort_low(limit=limit)
     else:
         result = db_sort_low()
-    for i in result:
-        city = i['name_city']
-        answer += f"{city} "
-        bot.send_message(message.from_user.id, city)
+    if len(result) > 0:
+        for i in result:
+            city = i['name_city']
+            info_city = func_info_city(country=name_country, city=city)
+            weather_city = func_weather_city(city=city)
+            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
+            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    else:
+        answer += f"Данных о стране {name_country} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
     db_history('low', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
-    bot.send_message(message.from_user.id, 'DELETE')
+    bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
 @bot.message_handler(commands=['high'])
@@ -356,13 +410,20 @@ def get_text_high(message):
         result = db_sort_high(limit=limit)
     else:
         result = db_sort_high()
-    for i in result:
-        city = i['name_city']
-        answer += f"{city} "
-        bot.send_message(message.from_user.id, city)
+    print(result)
+    if len(result) > 0:
+        for i in result:
+            city = i['name_city']
+            info_city = func_info_city(country=name_country, city=city)
+            weather_city = func_weather_city(city=city)
+            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
+            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    else:
+        answer += f"Данных о стране {name_country} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
     db_history('high', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
-    bot.send_message(message.from_user.id, 'DELETE')
+    bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
 @bot.message_handler(commands=['custom'])
@@ -405,13 +466,19 @@ def get_text_seven_custom(message):
         result = db_sort_custom(float(first_num), float(seven_num), limit=limit)
     else:
         result = db_sort_custom(float(first_num), float(seven_num))
-    for i in result:
-        city = i['name_city']
-        answer += f"{city} "
-        bot.send_message(message.from_user.id, city)
+    if len(result) > 0:
+        for i in result:
+            city = i['name_city']
+            info_city = func_info_city(country=name_country, city=city)
+            weather_city = func_weather_city(city=city)
+            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
+            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+    else:
+        answer += f"Данных о стране {name_country} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
     db_history('custom', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
-    bot.send_message(message.from_user.id, 'DELETE')
+    bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
 @bot.message_handler(commands=['history'])
@@ -435,7 +502,7 @@ def get_text_command_high(message):
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     if message.text == 'Привет':
-        bot.send_message(message.from_user.id, "Как тебя зовут?")
+        bot.send_message(message.from_user.id, "Для ознакомления с командами бота напиши /help")
 
 
 if __name__ == '__main__':
