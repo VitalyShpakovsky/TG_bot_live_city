@@ -58,7 +58,8 @@ def get_text_low(message):
     global db_create
     answer = ''
     func_add_table(data, name_country)
-    if isinstance(int(message.text), int) and 0 < int(message.text) <= 5:
+    limit = message.text
+    if limit.isdigit() and 0 < int(message.text) <= 5:
         result = db_sort_low(limit=int(message.text))
     else:
         result = db_sort_low()
@@ -97,7 +98,8 @@ def get_text_high(message):
     global db_create
     answer = ''
     func_add_table(data, name_country)
-    if isinstance(int(message.text), int) and 0 < int(message.text) <= 5:
+    limit = message.text
+    if limit.isdigit() and 0 < int(message.text) <= 5:
         result = db_sort_high(limit=int(message.text))
     else:
         result = db_sort_high()
@@ -152,7 +154,8 @@ def get_text_seven_custom(message):
     global first_num
     answer = ''
     func_add_table(data, name_country)
-    if isinstance(int(message.text), int) and 0 < int(message.text) <= 5:
+    limit = message.text
+    if limit.isdigit() and 0 < int(message.text) <= 5:
         result = db_sort_custom(float(first_num), float(seven_num), limit=int(message.text))
     else:
         result = db_sort_custom(float(first_num), float(seven_num))
