@@ -32,7 +32,7 @@ def _add_value_table(value: tuple) -> None:  # добавление данных
     connection.commit()
 
 
-def _sort_value_table_high(limit=3):  # функция сортировки по убыванию
+def _sort_value_table_high(limit: int = 3) -> list:  # функция сортировки по убыванию
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"SELECT name_city from city ORDER BY lat DESC LIMIT {limit}")
@@ -40,7 +40,7 @@ def _sort_value_table_high(limit=3):  # функция сортировки по
     return result
 
 
-def _sort_value_table_low(limit=3):  # функция сортировки по возрастанию
+def _sort_value_table_low(limit: int = 3) -> list:  # функция сортировки по возрастанию
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"SELECT name_city from city ORDER BY lat LIMIT {limit}")
@@ -48,7 +48,8 @@ def _sort_value_table_low(limit=3):  # функция сортировки по 
     return result
 
 
-def _sort_value_table_custom(min_num: float, max_num: float, limit=3):  # функция сортировки по параметрам
+def _sort_value_table_custom(min_num: float, max_num: float, limit: int = 3) -> list:
+    #  функция сортировки по параметрам
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"SELECT name_city from city WHERE lat >= {min_num} AND lat <= {max_num} LIMIT {limit}")
@@ -56,14 +57,14 @@ def _sort_value_table_custom(min_num: float, max_num: float, limit=3):  # фун
     return result
 
 
-def _delete_table():  # функция удаления таблицы
+def _delete_table() -> None:  # функция удаления таблицы
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute("DELETE FROM city")
     connection.commit()
 
 
-def _add_history(*args):
+def _add_history(*args) -> None:
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"INSERT INTO history(command, country, city, data) "
@@ -71,7 +72,7 @@ def _add_history(*args):
     connection.commit()
 
 
-def _read_history(limit=10):
+def _read_history(limit: int = 10) -> list:
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"SELECT command, country, city, data from history ORDER BY id_history DESC LIMIT {limit}")

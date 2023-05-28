@@ -6,7 +6,7 @@ from siteAPI.core import func_info_city, func_weather_city
 import siteAPI.core
 
 
-def func_add_table(db: dict, user_country: str):  # функция записи полученных данных с сайта в базу данных
+def func_add_table(db: dict, user_country: str) -> None:  # функция записи полученных данных с сайта в базу данных
     for i_dict in db['cities']:
         if user_country.title() == i_dict['country_name']:
             value = (i_dict['city_name'], i_dict['country_name'], i_dict['lat'], i_dict['lng'])
@@ -31,12 +31,14 @@ first_num = ''
 seven_num = ''
 
 
+# функция реагирования телеграмм бота на команды: 'start', 'hello-world'
 @bot.message_handler(commands=['start', 'hello-world'])
 def get_text_command(message):
     bot.send_message(message.from_user.id, 'Привет, это мой учебный бот? '
                                            'Для ознакомления с командами бота напиши "/help"')
 
 
+# функция реагирования телеграмм бота на команду: 'low'
 @bot.message_handler(commands=['low'])
 def get_text_command_low(message):
     bot.send_message(message.from_user.id, 'Введи название страны')
@@ -75,6 +77,7 @@ def get_text_low(message):
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
+# функция реагирования телеграмм бота на команду: 'high'
 @bot.message_handler(commands=['high'])
 def get_text_command_high(message):
     bot.send_message(message.from_user.id, 'Введи название страны')
@@ -113,6 +116,7 @@ def get_text_high(message):
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
+# функция реагирования телеграмм бота на команду: 'custom'
 @bot.message_handler(commands=['custom'])
 def get_text_command_custom(message):
     bot.send_message(message.from_user.id, 'Введи название страны')
@@ -167,6 +171,7 @@ def get_text_seven_custom(message):
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
+# функция реагирования телеграмм бота на команду: 'history'
 @bot.message_handler(commands=['history'])
 def get_text_command_high(message):
     result = db_wr_history()
@@ -174,6 +179,7 @@ def get_text_command_high(message):
         bot.send_message(message.from_user.id, f"{i[0]}, {i[1]}, {i[2]}, {i[3]}")
 
 
+# функция реагирования телеграмм бота на команду: 'help'
 @bot.message_handler(commands=['help'])
 def get_text_command_high(message):
     help_test = """Список команд бота:
@@ -185,6 +191,7 @@ def get_text_command_high(message):
     bot.send_message(message.from_user.id, help_test)
 
 
+# функция реагирования телеграмм бота на сообщение: 'Привет'
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     if message.text == 'Привет':
