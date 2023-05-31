@@ -32,39 +32,38 @@ def _add_value_table(value: tuple) -> None:  # добавление данных
     connection.commit()
 
 
-def _sort_value_table_high(limit: int = 3) -> list:  # функция сортировки по убыванию
+def _write_value_country() -> list:  # функция вывода списка всех городов в отсортированном порядке по алфавиту
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
-    cur.execute(f"SELECT name_city from city ORDER BY lat DESC LIMIT {limit}")
+    cur.execute(f"SELECT name_city from city ORDER BY name_city")
     result = cur.fetchall()
     return result
 
 
-def _sort_value_table_low(limit: int = 3) -> list:  # функция сортировки по возрастанию
+def _write_value_city(city: str) -> list:  # функция вывода конкретного города
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
-    cur.execute(f"SELECT name_city from city ORDER BY lat LIMIT {limit}")
+    cur.execute(f"SELECT name_city from city WHERE name_city = '{city}'")
     result = cur.fetchall()
     return result
 
 
-def _sort_value_table_custom(min_num: float, max_num: float, limit: int = 3) -> list:
-    #  функция сортировки по параметрам
+def _write_value_compression() -> list:   # функция вывода городов и стран имеющихся в базе данных (2 значения)
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
-    cur.execute(f"SELECT name_city from city WHERE lat >= {min_num} AND lat <= {max_num} LIMIT {limit}")
+    cur.execute(f"SELECT name_city, name_country from city")
     result = cur.fetchall()
     return result
 
 
-def _delete_table() -> None:  # функция удаления таблицы
+def _delete_table() -> None:  # функция удаления таблицы city
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute("DELETE FROM city")
     connection.commit()
 
 
-def _add_history(*args) -> None:
+def _add_history(*args) -> None:  # функция записи данных в таблицу history
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"INSERT INTO history(command, country, city, data) "
@@ -72,7 +71,7 @@ def _add_history(*args) -> None:
     connection.commit()
 
 
-def _read_history(limit: int = 10) -> list:
+def _read_history(limit: int = 10) -> list:  # функция вывода данных из таблицы history
     connection = sqlite3.connect('diploma.db')
     cur = connection.cursor()
     cur.execute(f"SELECT command, country, city, data from history ORDER BY id_history DESC LIMIT {limit}")
@@ -90,16 +89,16 @@ class CRUDInteface:
         return _add_value_table
 
     @staticmethod
-    def sortic_high():
-        return _sort_value_table_high
+    def command_country():
+        return _write_value_country
 
     @staticmethod
-    def sortic_low():
-        return _sort_value_table_low
+    def command_city():
+        return _write_value_city
 
     @staticmethod
-    def sortic_custom():
-        return _sort_value_table_custom
+    def sortic_compression():
+        return _write_value_compression
 
     @staticmethod
     def table_clear():
