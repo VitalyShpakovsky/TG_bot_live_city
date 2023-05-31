@@ -6,9 +6,18 @@ from siteAPI.core import func_info_city, func_weather_city
 import siteAPI.core
 
 
-def func_add_table(db: dict, user_country: str) -> None:  # функция записи полученных данных с сайта в базу данных
+# функция записи всех городов страны полученных с сайта в базу данных
+def func_add_table_country(db: dict, user_country: str) -> None:
     for i_dict in db['cities']:
         if user_country.title() == i_dict['country_name']:
+            value = (i_dict['city_name'], i_dict['country_name'], i_dict['lat'], i_dict['lng'])
+            db_read(value)
+
+
+# функция записи введенного города страны в базу данных
+def func_add_table_city(db: dict, user_country: str, user_city: str) -> None:
+    for i_dict in db['cities']:
+        if user_country.title() == i_dict['country_name'] and user_city.title() == i_dict['city_name']:
             value = (i_dict['city_name'], i_dict['country_name'], i_dict['lat'], i_dict['lng'])
             db_read(value)
 
@@ -19,16 +28,16 @@ bot = telebot.TeleBot(headers['Token'])
 db_read = crud.added()
 db_clear = crud.table_clear()
 db_create = crud.create()
-db_sort_high = crud.sortic_high()
-db_sort_low = crud.sortic_low()
-db_sort_custom = crud.sortic_custom()
+db_command_country = crud.command_country()
+db_command_city = crud.command_city()
+db_command_compression = crud.sortic_compression()
 db_history = crud.table_history()
 db_wr_history = crud.history()
 data = siteAPI.core.data
 db_create()
 name_country = ''
-first_num = ''
-seven_num = ''
+first_city = ''
+seven_city = ''
 
 
 # функция реагирования телеграмм бота на команды: 'start', 'hello-world'
@@ -38,71 +47,58 @@ def get_text_command(message):
                                            'Для ознакомления с командами бота напиши "/help"')
 
 
-# функция реагирования телеграмм бота на команду: 'low'
-@bot.message_handler(commands=['low'])
-def get_text_command_low(message):
+# функция реагирования телеграмм бота на команду: 'country'
+@bot.message_handler(commands=['country'])
+def get_text_command_country(message):
     bot.send_message(message.from_user.id, 'Введи название страны')
-    bot.register_next_step_handler(message, get_text_limit_low)
+    bot.register_next_step_handler(message, get_text_country)
 
 
-def get_text_limit_low(message):
-    global name_country
-    name_country = message.text
-    bot.send_message(message.from_user.id, 'Введите количество выводящих на экран городов (не более 5)')
-    bot.register_next_step_handler(message, get_text_low)
-
-
-def get_text_low(message):
+def get_text_country(message):
     global name_country
     global data
     global db_create
     answer = ''
-    func_add_table(data, name_country)
-    limit = message.text
-    if limit.isdigit() and 0 < int(message.text) <= 5:
-        result = db_sort_low(limit=int(message.text))
-    else:
-        result = db_sort_low()
+    name_country = message.text.title()
+    func_add_table_country(data, name_country)
+    result = db_command_country()
+    list_city = ''
     if len(result) > 0:
         for i in result:
             city = i[0]
-            info_city = func_info_city(country=name_country, city=city)
-            weather_city = func_weather_city(city=city)
-            answer += f"{city}: {info_city}. Weather: {weather_city}\n"
-            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+            list_city += f"{city}\n"
+            answer += f" {city},"
+        bot.send_message(message.from_user.id, f"Список городов {name_country}:\n{list_city}")
     else:
         answer += f"Данных о стране {name_country} нет\n"
         bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
-    db_history('low', name_country, answer, str(datetime.datetime.now()).split('.')[0])
+    db_history('country', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
-# функция реагирования телеграмм бота на команду: 'high'
-@bot.message_handler(commands=['high'])
-def get_text_command_high(message):
+# функция реагирования телеграмм бота на команду: 'city'
+@bot.message_handler(commands=['city'])
+def get_text_city_country(message):
     bot.send_message(message.from_user.id, 'Введи название страны')
-    bot.register_next_step_handler(message, get_text_limit_high)
+    bot.register_next_step_handler(message, get_text_city)
 
 
-def get_text_limit_high(message):
+def get_text_city(message):
     global name_country
-    name_country = message.text
-    bot.send_message(message.from_user.id, 'Введите количество выводящих на экран городов (не более 5)')
-    bot.register_next_step_handler(message, get_text_high)
+    name_country = message.text.title()
+    bot.send_message(message.from_user.id, 'Введите название города')
+    bot.register_next_step_handler(message, get_text_command_city)
 
 
-def get_text_high(message):
+def get_text_command_city(message):
     global name_country
     global data
     global db_create
+    city = message.text.title()
     answer = ''
-    func_add_table(data, name_country)
-    limit = message.text
-    if limit.isdigit() and 0 < int(message.text) <= 5:
-        result = db_sort_high(limit=int(message.text))
-    else:
-        result = db_sort_high()
+    func_add_table_country(data, name_country)
+    result = db_command_city(city)
     if len(result) > 0:
         for i in result:
             city = i[0]
@@ -111,64 +107,63 @@ def get_text_high(message):
             answer += f"{city}: {info_city}. Weather: {weather_city}\n"
             bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
     else:
-        answer += f"Данных о стране {name_country} нет\n"
-        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
-    db_history('high', name_country, answer, str(datetime.datetime.now()).split('.')[0])
+        answer += f"Данных о городе {city} нет\n"
+        bot.send_message(message.from_user.id, f"Данных о городе {city} нет")
+    db_history('city', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
 
 
-# функция реагирования телеграмм бота на команду: 'custom'
-@bot.message_handler(commands=['custom'])
-def get_text_command_custom(message):
-    bot.send_message(message.from_user.id, 'Введи название страны')
-    bot.register_next_step_handler(message, get_text_first_num)
+# функция реагирования телеграмм бота на команду: 'compression'
+@bot.message_handler(commands=['compression'])
+def get_text_compression(message):
+    bot.send_message(message.from_user.id, 'Введите название страны первого города')
+    bot.register_next_step_handler(message, get_text_first_city)
 
 
-def get_text_first_num(message):
+def get_text_first_city(message):
     global name_country
-    name_country = message.text
-    bot.send_message(message.from_user.id, 'Введи первое значение диапазона')
-    bot.register_next_step_handler(message, get_text_seven_num)
+    name_country = message.text.title()
+    bot.send_message(message.from_user.id, 'Введите название первого города')
+    bot.register_next_step_handler(message, get_text_seven_country)
 
 
-def get_text_seven_num(message):
-    global first_num
-    first_num = message.text
-    bot.send_message(message.from_user.id, 'Введи второе значение диапазона')
-    bot.register_next_step_handler(message, get_text_limit_custom)
-
-
-def get_text_limit_custom(message):
-    global seven_num
-    seven_num = message.text
-    bot.send_message(message.from_user.id, 'Введите количество выводящих на экран городов (не более 5)')
-    bot.register_next_step_handler(message, get_text_seven_custom)
-
-
-def get_text_seven_custom(message):
-    global seven_num
+def get_text_seven_country(message):
+    global first_city
     global data
-    global db_create
     global name_country
-    global first_num
+    first_city = message.text.title()
+    func_add_table_city(data, name_country, first_city)
+    bot.send_message(message.from_user.id, 'Введите название страны второго города')
+    bot.register_next_step_handler(message, get_text_seven_city)
+
+
+def get_text_seven_city(message):
+    global name_country
+    name_country = message.text.title()
+    bot.send_message(message.from_user.id, 'Введите название второго города')
+    bot.register_next_step_handler(message, get_text_command_compression)
+
+
+def get_text_command_compression(message):
+    global seven_city
+    global data
+    global name_country
     answer = ''
-    func_add_table(data, name_country)
-    limit = message.text
-    if limit.isdigit() and 0 < int(message.text) <= 5:
-        result = db_sort_custom(float(first_num), float(seven_num), limit=int(message.text))
-    else:
-        result = db_sort_custom(float(first_num), float(seven_num))
+    seven_city = message.text.title()
+    func_add_table_city(data, name_country, seven_city)
+    result = db_command_compression()
     if len(result) > 0:
         for i in result:
             city = i[0]
-            info_city = func_info_city(country=name_country, city=city)
+            country = i[1]
+            info_city = func_info_city(country=country, city=city)
             weather_city = func_weather_city(city=city)
             answer += f"{city}: {info_city}. Weather: {weather_city}\n"
             bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
     else:
-        answer += f"Данных о стране {name_country} нет\n"
-        bot.send_message(message.from_user.id, f"Данных о стране {name_country} нет")
+        answer += f"Данных о городах нет\n"
+        bot.send_message(message.from_user.id, f"Данных о городах нет")
     db_history('custom', name_country, answer, str(datetime.datetime.now()).split('.')[0])
     db_clear()
     bot.send_message(message.from_user.id, 'Можете ввести новую команду.')
@@ -186,10 +181,10 @@ def get_text_command_high(message):
 @bot.message_handler(commands=['help'])
 def get_text_command_high(message):
     help_test = """Список команд бота:
-    /low - просит ввести название страны и сортирует города в порядке их ближайшего расположения к экватору Земли
-    /high - просит ввести название страны и сортирует города в порядке их наиболее удаленного расположения к экватору Земли
-    /custom - просит ввести название страны, а также диапазон значений широты расположения городов для сортировки
-    /history - выводит последние 10 запросов 
+    /country - просит ввести название страны и выводит список всех городов страны в алфавитном порядке
+    /city - просит ввести название страны и города, после выводит информацию о городе
+    /compression - выводит информацию о введенных двух городах
+    /history - выводит последние 10 запросов
     """
     bot.send_message(message.from_user.id, help_test)
 
