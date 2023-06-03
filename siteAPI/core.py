@@ -1,6 +1,12 @@
 from settings import BotAPISettings
 import requests
 import json
+from selenium import webdriver
+from base64 import b64decode
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 
 
 token = BotAPISettings()
@@ -60,3 +66,22 @@ def func_weather_city(city: str) -> str:  # функция получения п
     answer = f"Температура: {data['current']['temp_c']}°C\nВлажность: {data['current']['humidity']} %\n"\
              f"Давление: {data['current']['pressure_mb']} mbar."
     return answer
+
+
+def add_images(key: str) -> bytes: # функция получения картинки по запросу из Google-поиска
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    url = f'https://www.google.com/search?q={key}&newwindow=1&espv=2&source=lnms&tbm=isch&sa=X'
+    try:
+        driver.get(url=url)
+        img = driver.find_element(By.XPATH,
+                                  ' // *[ @ id = "islrg"] / div[1] / div[2] / a[1] / div[1] / img').get_attribute('src')
+        src = img.split('data:image/jpeg;base64,')[1]
+        img_data = b64decode(src)
+        return img_data
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()

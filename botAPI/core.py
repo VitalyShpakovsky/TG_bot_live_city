@@ -2,7 +2,7 @@ import telebot
 import datetime
 from settings import BotAPISettings
 from db.core import crud
-from siteAPI.core import func_info_city, func_weather_city
+from siteAPI.core import func_info_city, func_weather_city, add_images
 import siteAPI.core
 
 
@@ -99,13 +99,14 @@ def get_text_command_city(message):
     answer = ''
     func_add_table_country(data, name_country)
     result = db_command_city(city)
+    images = add_images(f"{city} {name_country}")
     if len(result) > 0:
         for i in result:
             city = i[0]
             info_city = func_info_city(country=name_country, city=city)
             weather_city = func_weather_city(city=city)
             answer += f"{city}: {info_city}. Weather: {weather_city}\n"
-            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+            bot.send_photo(message.from_user.id, photo=images, caption=f"{city}:\n{info_city}.\nПогода: {weather_city}")
     else:
         answer += f"Данных о городе {city} нет\n"
         bot.send_message(message.from_user.id, f"Данных о городе {city} нет")
@@ -157,10 +158,11 @@ def get_text_command_compression(message):
         for i in result:
             city = i[0]
             country = i[1]
+            images = add_images(f"{city} {country}")
             info_city = func_info_city(country=country, city=city)
             weather_city = func_weather_city(city=city)
             answer += f"{city}: {info_city}. Weather: {weather_city}\n"
-            bot.send_message(message.from_user.id, f"{city}:\n{info_city}.\nПогода: {weather_city}")
+            bot.send_photo(message.from_user.id, photo=images, caption=f"{city}:\n{info_city}.\nПогода: {weather_city}")
     else:
         answer += f"Данных о городах нет\n"
         bot.send_message(message.from_user.id, f"Данных о городах нет")
