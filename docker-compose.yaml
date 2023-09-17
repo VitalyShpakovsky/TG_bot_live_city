@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  app_tg:
+    build:
+      dockerfile: ./Dockerfile
+    command:
+      - python3
+      - main.py
+    restart: always
+    env_file:
+      - .env
+
